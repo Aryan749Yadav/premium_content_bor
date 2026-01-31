@@ -38,8 +38,8 @@ class PremiumContentBot:
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
     
     async def handle_start(self, update: Update, context):
-        """Handle /start command"""
-        await self.user_commands.handle_start(update.message)
+    """Handle /start command"""
+    await self.user_commands.handle_start(update, context)
     
     async def handle_admin(self, update: Update, context):
         """Handle /admin command"""
@@ -78,3 +78,4 @@ class PremiumContentBot:
 if __name__ == "__main__":
     bot = PremiumContentBot()
     bot.run()
+
