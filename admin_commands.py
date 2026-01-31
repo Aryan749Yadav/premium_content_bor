@@ -1,3 +1,5 @@
+# Replace admin_commands.py
+cat > admin_commands.py << 'EOF'
 """
 Admin-only command handlers
 """
@@ -11,57 +13,84 @@ class AdminCommands:
         self.auth = UserAuth()
         self.menu = MenuManager()
     
-    async def handle_admin_command(self, message, command_parts):
+    async def handle_admin_command(self, update, context, command_parts):
         """Route admin commands to appropriate handlers"""
-        user_id = message.from_user.id
+        user_id = update.message.from_user.id
         
         if not self.auth.is_admin(user_id):
-            await message.answer("⛔ This command is for admins only.")
+            await context.bot.send_message(
+                chat_id=update.message.chat_id,
+                text="⛔ This command is for admins only."
+            )
             return
         
         command = command_parts[0].lower() if command_parts else ""
         
         if command == "add" and len(command_parts) > 1:
-            await self.add_premium_user(message, command_parts[1])
+            await self.add_premium_user(update.message, context, command_parts[1])
         elif command == "remove" and len(command_parts) > 1:
-            await self.remove_premium_user(message, command_parts[1])
+            await self.remove_premium_user(update.message, context, command_parts[1])
         elif command == "listusers":
-            await self.list_premium_users(message)
+            await self.list_premium_users(update.message, context)
         elif command == "export":
-            await self.export_menu(message)
+            await self.export_menu(update.message, context)
         elif command == "button":
-            await self.start_button_creation(message)
+            await self.start_button_creation(update.message, context)
         else:
-            await message.answer("❌ Unknown admin command.")
+            await context.bot.send_message(
+                chat_id=update.message.chat_id,
+                text="❌ Unknown admin command."
+            )
     
-    async def add_premium_user(self, message, target_user_id):
+    async def add_premium_user(self, message, context, target_user_id):
         """Add user to premium list"""
         try:
             user_id = int(target_user_id)
             if self.auth.add_premium_user(user_id, message.from_user.id):
-                await message.answer(f"✅ User {user_id} added to premium list.")
+                await context.bot.send_message(
+                    chat_id=message.chat_id,
+                    text=f"✅ User {user_id} added to premium list."
+                )
             else:
-                await message.answer("❌ Failed to add user.")
+                await context.bot.send_message(
+                    chat_id=message.chat_id,
+                    text="❌ Failed to add user."
+                )
         except ValueError:
-            await message.answer("❌ Invalid user ID. Please provide a numeric ID.")
+            await context.bot.send_message(
+                chat_id=message.chat_id,
+                text="❌ Invalid user ID. Please provide a numeric ID."
+            )
     
-    async def remove_premium_user(self, message, target_user_id):
+    async def remove_premium_user(self, message, context, target_user_id):
         """Remove user from premium list"""
         try:
             user_id = int(target_user_id)
             if self.auth.remove_premium_user(user_id):
-                await message.answer(f"✅ User {user_id} removed from premium list.")
+                await context.bot.send_message(
+                    chat_id=message.chat_id,
+                    text=f"✅ User {user_id} removed from premium list."
+                )
             else:
-                await message.answer("❌ User not found or already removed.")
+                await context.bot.send_message(
+                    chat_id=message.chat_id,
+                    text="❌ User not found or already removed."
+                )
         except ValueError:
-            await message.answer("❌ Invalid user ID.")
+            await context.bot.send_message(
+                chat_id=message.chat_id,
+                text="❌ Invalid user ID."
+            )
     
-    async def list_premium_users(self, message):
+    async def list_premium_users(self, message, context):
         """List all premium users"""
         users = self.auth.list_premium_users()
         
         if not users:
-            await message.answer("📭 No premium users found.")
+            await context.bot.send_message(
+                chat_id=message.chat_id,
+                text="📭 No premium users found."
+            )
             return
         
         response = "👑 **Premium Users:**\n\n"
@@ -70,9 +99,12 @@ class AdminCommands:
             response += f"  Added by: `{user['added_by']}`\n"
             response += f"  Date: {user['added_date']}\n\n"
         
-        await message.answer(response)
+        await context.bot.send_message(
+            chat_id=message.chat_id,
+            text=response
+        )
     
-    async def export_menu(self, message):
+    async def export_menu(self, message, context):
         """Export menu structure"""
         menu_json = self.menu.export_menu()
         
@@ -82,20 +114,25 @@ class AdminCommands:
         
         # Send file to admin
         with open("data/menu_export.json", "rb") as f:
-            await message.answer_document(
+            await context.bot.send_document(
+                chat_id=message.chat_id,
                 document=f,
                 caption="📁 Menu structure exported successfully."
             )
     
-    async def start_button_creation(self, message):
+    async def start_button_creation(self, message, context):
         """Start the button creation process"""
         # This would initiate a conversation flow
         # For simplicity, showing basic response
-        await message.answer(
-            "🔄 Button creation process started.\n"
-            "Please send:\n"
-            "1. Button name\n"
-            "2. Content type (link/url/folder)\n"
-            "3. Content data\n\n"
-            "Or use /cancel to abort."
+        await context.bot.send_message(
+            chat_id=message.chat_id,
+            text=(
+                "🔄 Button creation process started.\n"
+                "Please send:\n"
+                "1. Button name\n"
+                "2. Content type (link/url/folder)\n"
+                "3. Content data\n\n"
+                "Or use /cancel to abort."
+            )
         )
+EOF
