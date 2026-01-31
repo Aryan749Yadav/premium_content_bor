@@ -28,7 +28,7 @@ class UserCommands:
         if self.auth.is_premium(user_id):
             await self.show_main_menu(message, welcome_text)
         else:
-            await message.reply(
+            await message.answer(
                 "⛔ **Access Denied**\n\n"
                 "You do not have premium access.\n"
                 "Please contact the admin for subscription details."
@@ -37,7 +37,7 @@ class UserCommands:
     async def show_main_menu(self, message, text=""):
         """Show main menu to premium users"""
         if not self.auth.is_premium(message.from_user.id):
-            await message.reply("⛔ Premium access required.")
+            await message.answer("⛔ Premium access required.")
             return
         
         menu_items = self.menu.get_menu_items(parent_id=0)
@@ -67,7 +67,7 @@ class UserCommands:
                 keyboard.append(row)
         
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await message.reply(text or "📂 **Main Menu**", reply_markup=reply_markup)
+        await message.answer(text or "📂 **Main Menu**", reply_markup=reply_markup)
     
     async def handle_callback_query(self, callback_query):
         """Handle button clicks"""
@@ -151,11 +151,11 @@ class UserCommands:
             success = await self.delivery.forward_content(user_id, channel_id, message_id)
             
             if success:
-                await callback_query.message.reply("✅ Content delivered! (Expires in 3 hours)")
+                await callback_query.message.answer("✅ Content delivered! (Expires in 3 hours)")
             else:
-                await callback_query.message.reply("❌ Failed to deliver content.")
+                await callback_query.message.answer("❌ Failed to deliver content.")
         else:
-            await callback_query.message.reply("❌ Invalid content configuration.")
+            await callback_query.message.answer("❌ Invalid content configuration.")
     
     async def handle_url(self, user_id, item, callback_query):
         """Handle URL content"""
@@ -163,9 +163,9 @@ class UserCommands:
         
         if 'url' in content_data:
             url = content_data['url']
-            await callback_query.message.reply(f"🔗 Click here: {url}")
+            await callback_query.message.answer(f"🔗 Click here: {url}")
         else:
-            await callback_query.message.reply("❌ Invalid URL configuration.")
+            await callback_query.message.answer("❌ Invalid URL configuration.")
     
     async def handle_back_button(self, user_id, callback_query):
         """Handle back button navigation"""
