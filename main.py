@@ -8,6 +8,7 @@ import config
 from user_commands import UserCommands
 from admin_commands import AdminCommands
 from utils import setup_logging
+from content_delivery import ContentDelivery
 
 # Setup logging
 logger = setup_logging()
@@ -19,6 +20,7 @@ class PremiumContentBot:
         # Initialize handlers
         self.user_commands = UserCommands(self.application.bot)
         self.admin_commands = AdminCommands(self.application.bot)
+        self.content_delivery = ContentDelivery(self.application.bot)
         
         # Add handlers
         self.setup_handlers()
@@ -57,8 +59,7 @@ class PremiumContentBot:
         """Periodic cleanup task"""
         while True:
             try:
-                # This would call content_delivery.cleanup_expired_content()
-                # For now, just sleep
+                await self.content_delivery.cleanup_expired_content()
                 await asyncio.sleep(config.CLEANUP_INTERVAL)
             except Exception as e:
                 logger.error(f"Cleanup task error: {e}")
