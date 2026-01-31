@@ -1,12 +1,12 @@
 """
-Main bot application - Entry point
+Main bot with SIMPLE ADMIN interface
 """
 import asyncio
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 from telegram import Update
 import config
 from user_commands import UserCommands
-from admin_commands import AdminCommands
+from simple_admin import SimpleAdmin  # Changed from admin_commands
 from utils import setup_logging
 from content_delivery import ContentDelivery
 
@@ -19,7 +19,7 @@ class PremiumContentBot:
         
         # Initialize handlers
         self.user_commands = UserCommands(self.application.bot)
-        self.admin_commands = AdminCommands(self.application.bot)
+        self.simple_admin = SimpleAdmin(self.application.bot)  # Changed
         self.content_delivery = ContentDelivery(self.application.bot)
         
         # Add handlers
@@ -31,13 +31,14 @@ class PremiumContentBot:
         self.application.add_handler(CommandHandler("start", self.handle_start))
         self.application.add_handler(CommandHandler("admin", self.handle_admin))
         
-        # Callback query handlers
-        # Admin callbacks (button creation)
-        self.application.add_handler(CallbackQueryHandler(self.handle_admin_callback, pattern="^(create_|cancel_)"))
-        # User callbacks (menu navigation) - catch all other callbacks
+        # Admin callback handlers (for simple admin interface)
+        self.application.add_handler(CallbackQueryHandler(self.handle_admin_callback, 
+                                                        pattern="^(admin_|create_|select_|add_|setup_|folder_|view_)"))
+        
+        # User callback handlers (menu navigation)
         self.application.add_handler(CallbackQueryHandler(self.handle_user_callback))
         
-        # Message handler for all text messages (for button creation responses)
+        # Message handler for responses
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
     
     async def handle_start(self, update: Update, context):
@@ -47,69 +48,37 @@ class PremiumContentBot:
     async def handle_admin(self, update: Update, context):
         """Handle /admin command"""
         command_parts = context.args
-        await self.admin_commands.handle_admin_command(update, context, command_parts)
+        await self.simple_admin.handle_admin_command(update, context, command_parts)
     
     async def handle_admin_callback(self, update: Update, context):
-        """Handle admin callback queries (button creation menu)"""
-        await self.admin_commands.handle_callback_query(update, context)
+        """Handle admin interface callbacks"""
+        await self.simple_admin.handle_callback(update, context)
     
     async def handle_user_callback(self, update: Update, context):
-        """Handle user callback queries (menu navigation)"""
-        # First check if it's an admin callback (should have been caught already)
-        query = update.callback_query
-        data = query.data
-        
-        if data.startswith("create_") or data.startswith("cancel_"):
-            # This should have been handled by admin callback handler
-            return
-        
-        # Otherwise, it's a user menu navigation callback
+        """Handle user menu navigation"""
         await self.user_commands.handle_callback_query(update, context)
     
     async def handle_message(self, update: Update, context):
-        """Handle regular text messages"""
-        # Check if it's a response to button creation
-        user_id = update.message.from_user.id
-        
-        # If user is in button creation state, handle it
-        if hasattr(self.admin_commands, 'user_states') and user_id in self.admin_commands.user_states:
-            await self.admin_commands.handle_message_response(update, context)
-            return
-        
-        # Otherwise, check if it's admin trying to use quick commands
-        text = update.message.text
-        
-        # Check for quick add pattern without command
-        if text and ' ' in text and len(text.split()) >= 3:
-            # Could be a quick add attempt, forward to admin commands
-            pass
-        
-        # Default response for other messages
-        if not text.startswith('/'):
-            await update.message.reply_text(
-                "🤖 **Premium Content Bot**\n\n"
-                "Use /start to access premium content\n"
-                "Admins: Use /admin for management commands"
-            )
+        """Handle text messages"""
+        # First check if it's a response to admin actions
+        await self.simple_admin.handle_message_response(update, context)
     
     async def cleanup_task(self):
-        """Periodic cleanup task"""
+        """Periodic cleanup"""
         while True:
             try:
                 await self.content_delivery.cleanup_expired_content()
                 await asyncio.sleep(config.CLEANUP_INTERVAL)
             except Exception as e:
-                logger.error(f"Cleanup task error: {e}")
+                logger.error(f"Cleanup error: {e}")
     
     def run(self):
-        """Start the bot"""
+        """Start bot"""
         logger.info("Starting Premium Content Bot...")
         
-        # Start cleanup task
         loop = asyncio.get_event_loop()
         loop.create_task(self.cleanup_task())
         
-        # Start bot
         self.application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
