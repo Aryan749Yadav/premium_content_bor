@@ -1,3 +1,4 @@
+cat > user_commands.py << 'EOF'
 """
 User-facing command handlers and menu navigation
 """
@@ -94,11 +95,11 @@ class UserCommands:
             await callback_query.message.edit_text("❌ Content not found.")
             return
         
-        if item['type'] == 'folder':
+        if item['item_type'] == 'folder':
             await self.show_folder(user_id, item_id, callback_query)
-        elif item['type'] == 'button':
+        elif item['item_type'] == 'button':
             await self.deliver_content(user_id, item, callback_query)
-        elif item['type'] == 'url':
+        elif item['item_type'] == 'url':
             await self.handle_url(user_id, item, callback_query)
     
     async def show_folder(self, user_id, folder_id, callback_query):
@@ -112,12 +113,12 @@ class UserCommands:
         for item in menu_items:
             callback_data = f"menu_{item['item_id']}"
             
-            if item['type'] == 'folder':
-                button_text = f"📁 {item['name']}"
-            elif item['type'] == 'url':
-                button_text = f"🔗 {item['name']}"
+            if item['item_type'] == 'folder':
+                button_text = f"📁 {item['display_name']}"
+            elif item['item_type'] == 'url':
+                button_text = f"🔗 {item['display_name']}"
             else:
-                button_text = item['name']
+                button_text = item['display_name']
             
             row.append(InlineKeyboardButton(button_text, callback_data=callback_data))
             
@@ -133,7 +134,7 @@ class UserCommands:
             keyboard.append([InlineKeyboardButton("🔙 Back", callback_data="back")])
         
         reply_markup = InlineKeyboardMarkup(keyboard)
-        folder_name = folder_info['name'] if folder_info else "Folder"
+        folder_name = folder_info['display_name'] if folder_info else "Folder"
         
         await callback_query.message.edit_text(
             f"📂 **{folder_name}**",
@@ -169,6 +170,6 @@ class UserCommands:
     
     async def handle_back_button(self, user_id, callback_query):
         """Handle back button navigation"""
-        # This would need to track navigation history
         # Simplified: Go to root
         await self.show_main_menu(callback_query.message, "🔙 Returned to main menu")
+EOF
