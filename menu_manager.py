@@ -1,7 +1,9 @@
+cat > menu_manager.py << 'EOF'
 """
 Menu structure management for MongoDB
 """
 import json
+from datetime import datetime
 from database import MongoDB
 from bson import json_util
 
@@ -77,3 +79,4 @@ class MenuManager:
         except Exception as e:
             print(f"Error importing menu: {e}")
             return False
+EOF
