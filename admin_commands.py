@@ -1,5 +1,5 @@
 """
-Admin-only command handlers - SIMPLE WORKING VERSION
+Admin-only command handlers - WORKING VERSION
 """
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from user_auth import UserAuth
@@ -45,20 +45,7 @@ class AdminCommands:
         else:
             await context.bot.send_message(
                 chat_id=update.message.chat_id,
-                text="❌ Unknown admin command.\n\n"
-                     "📋 **Available Commands:**\n"
-                     "• `/admin add [user_id]` - Add premium user\n"
-                     "• `/admin remove [user_id]` - Remove premium user\n"
-                     "• `/admin listusers` - List all premium users\n"
-                     "• `/admin button` - Create new menu items\n"
-                     "• `/admin listmenu` - Show menu structure\n"
-                     "• `/admin deleteitem [id]` - Delete menu item\n"
-                     "• `/admin export` - Export menu\n"
-                     "• `/admin quickadd [parent] [type] [name] [data]` - Quick add\n\n"
-                     "📝 **Quick Add Format:**\n"
-                     "`/admin quickadd 0 folder Videos`\n"
-                     "`/admin quickadd 1 button \"Video 1\" -1003761591150,2`\n"
-                     "`/admin quickadd 0 url Website https://example.com`"
+                text="❌ Unknown admin command. Use /admin button to create menu items."
             )
     
     async def add_premium_user(self, message, context, target_user_id):
@@ -152,8 +139,7 @@ class AdminCommands:
         
         await context.bot.send_message(
             chat_id=message.chat_id,
-            text="🛠️ **Button Creation Menu**\n\n"
-                 "Select what you want to create:",
+            text="🛠️ **Button Creation Menu**\n\nSelect what you want to create:",
             reply_markup=reply_markup
         )
     
@@ -178,32 +164,15 @@ class AdminCommands:
         
         if data == "create_folder":
             await query.edit_message_text(
-                "📁 **Creating Folder**\n\n"
-                "Please reply with:\n"
-                "1. Parent folder ID (0 for root)\n"
-                "2. Folder name\n\n"
-                "Example: `0 My Videos`"
+                "📁 **Creating Folder**\n\nPlease reply with:\nParent ID and Folder Name\n\nExample: `0 My Videos`"
             )
         elif data == "create_button":
             await query.edit_message_text(
-                "📝 **Creating Database Link**\n\n"
-                "Please reply with:\n"
-                "1. Parent folder ID (0 for root)\n"
-                "2. Button name\n"
-                "3. Channel ID,Message ID\n\n"
-                "Example: `0 \"Video 1\" -1003761591150,2`\n\n"
-                "💡 Get Channel ID & Message ID by forwarding\n"
-                "a message from your database channel to\n"
-                "@username_to_id_bot"
+                "📝 **Creating Database Link**\n\nPlease reply with:\nParent ID, Button Name, and Channel,Message\n\nExample: `0 \"Video 1\" -1003761591150,2`"
             )
         elif data == "create_url":
             await query.edit_message_text(
-                "🔗 **Creating URL Button**\n\n"
-                "Please reply with:\n"
-                "1. Parent folder ID (0 for root)\n"
-                "2. Button name\n"
-                "3. URL\n\n"
-                "Example: `0 Website https://example.com`"
+                "🔗 **Creating URL Button**\n\nPlease reply with:\nParent ID, Button Name, and URL\n\nExample: `0 Website https://example.com`"
             )
     
     async def handle_message_response(self, update, context):
@@ -234,87 +203,49 @@ class AdminCommands:
                 )
                 
                 if item_id:
-                    await update.message.reply_text(
-                        f"✅ Folder created!\n"
-                        f"• Name: {folder_name}\n"
-                        f"• Parent ID: {parent_id}\n"
-                        f"• Item ID: {item_id}"
-                    )
+                    await update.message.reply_text(f"✅ Folder created! ID: {item_id}")
                 else:
                     await update.message.reply_text("❌ Failed to create folder.")
             
             elif action == "create_button":
-                # Parse: "parent_id "button name" channel_id,message_id"
-                try:
-                    # Find the last comma for channel,message
-                    last_comma = user_input.rfind(',')
-                    if last_comma == -1:
-                        raise ValueError("No comma found")
-                    
-                    # Get channel_id,message_id
-                    channel_data = user_input[last_comma+1:]
-                    channel_parts = channel_data.split(',')
-                    if len(channel_parts) != 2:
-                        raise ValueError("Invalid channel,message format")
-                    
-                    channel_id = int(channel_parts[0])
-                    message_id = int(channel_parts[1])
-                    
-                    # Get the rest for parent and name
-                    rest = user_input[:last_comma].strip()
-                    
-                    # Find where name ends (could have quotes)
-                    if rest.count('"') >= 2:
-                        # Name is in quotes
-                        first_quote = rest.find('"')
-                        last_quote = rest.rfind('"')
-                        parent_part = rest[:first_quote].strip()
-                        button_name = rest[first_quote+1:last_quote]
-                    else:
-                        # Name is not in quotes
-                        parts = rest.rsplit(' ', 1)
-                        if len(parts) < 2:
-                            raise ValueError("Invalid format")
-                        parent_part = parts[0]
-                        button_name = parts[1]
-                    
-                    parent_id = int(parent_part)
-                    
-                    item_id = self.menu.add_menu_item(
-                        parent_id=parent_id,
-                        item_type='button',
-                        display_name=button_name,
-                        content_data={
-                            'channel_id': channel_id,
-                            'message_id': message_id
-                        }
-                    )
-                    
-                    if item_id:
-                        await update.message.reply_text(
-                            f"✅ Database Link created!\n"
-                            f"• Name: {button_name}\n"
-                            f"• Parent ID: {parent_id}\n"
-                            f"• Channel: {channel_id}\n"
-                            f"• Message: {message_id}\n"
-                            f"• Item ID: {item_id}"
-                        )
-                    else:
-                        await update.message.reply_text("❌ Failed to create button.")
+                # Simple parsing - assume format: "parent_id button_name channel_id,message_id"
+                parts = user_input.split(' ')
+                if len(parts) < 3:
+                    await update.message.reply_text("❌ Format: `parent_id button_name channel_id,message_id`")
+                    return
                 
-                except Exception as e:
-                    await update.message.reply_text(
-                        f"❌ Error parsing: {str(e)}\n\n"
-                        "Correct format:\n"
-                        "`0 \"Video Name\" -1003761591150,2`\n"
-                        "or\n"
-                        "`0 VideoName -1003761591150,2`"
-                    )
+                parent_id = int(parts[0])
+                button_name = ' '.join(parts[1:-1])  # Everything except first and last
+                
+                # Last part should be channel_id,message_id
+                last_part = parts[-1]
+                if ',' not in last_part:
+                    await update.message.reply_text("❌ Last part should be: channel_id,message_id")
+                    return
+                
+                channel_parts = last_part.split(',')
+                channel_id = int(channel_parts[0])
+                message_id = int(channel_parts[1])
+                
+                item_id = self.menu.add_menu_item(
+                    parent_id=parent_id,
+                    item_type='button',
+                    display_name=button_name,
+                    content_data={
+                        'channel_id': channel_id,
+                        'message_id': message_id
+                    }
+                )
+                
+                if item_id:
+                    await update.message.reply_text(f"✅ Button created! ID: {item_id}")
+                else:
+                    await update.message.reply_text("❌ Failed to create button.")
             
             elif action == "create_url":
                 parts = user_input.split(' ', 2)
                 if len(parts) < 3:
-                    await update.message.reply_text("❌ Format: `parent_id name url`")
+                    await update.message.reply_text("❌ Format: `parent_id button_name url`")
                     return
                 
                 parent_id = int(parts[0])
@@ -329,13 +260,7 @@ class AdminCommands:
                 )
                 
                 if item_id:
-                    await update.message.reply_text(
-                        f"✅ URL Button created!\n"
-                        f"• Name: {button_name}\n"
-                        f"• Parent ID: {parent_id}\n"
-                        f"• URL: {url}\n"
-                        f"• Item ID: {item_id}"
-                    )
+                    await update.message.reply_text(f"✅ URL Button created! ID: {item_id}")
                 else:
                     await update.message.reply_text("❌ Failed to create URL button.")
         
@@ -354,41 +279,25 @@ class AdminCommands:
         if not items:
             await context.bot.send_message(
                 chat_id=message.chat_id,
-                text="📭 No menu items found. Create some with `/admin button`"
+                text="📭 No menu items found."
             )
             return
         
         response = "📋 **Menu Structure:**\n\n"
         
-        def build_tree(parent_id=0, level=0):
-            nonlocal response
-            items = self.menu.get_menu_items(parent_id=parent_id)
+        for item in items:
+            icon = "📁" if item['item_type'] == 'folder' else "🔗" if item['item_type'] == 'url' else "📝"
+            response += f"{icon} **{item['display_name']}**\n"
+            response += f"  ID: `{item['item_id']}` | Type: {item['item_type']}\n"
             
-            for item in items:
-                indent = "  " * level
-                icon = "📁" if item['item_type'] == 'folder' else "🔗" if item['item_type'] == 'url' else "📝"
-                response += f"{indent}{icon} **{item['display_name']}**\n"
-                response += f"{indent}  ID: `{item['item_id']}` | Type: {item['item_type']}\n"
-                
-                if item['item_type'] == 'button' and 'content_data' in item:
-                    cd = item['content_data']
-                    if 'channel_id' in cd and 'message_id' in cd:
-                        response += f"{indent}  Channel: {cd['channel_id']}, Msg: {cd['message_id']}\n"
-                elif item['item_type'] == 'url' and 'content_data' in item:
-                    cd = item['content_data']
-                    if 'url' in cd:
-                        response += f"{indent}  URL: {cd['url'][:50]}...\n"
-                
-                # Recursively show folder contents
-                if item['item_type'] == 'folder':
-                    build_tree(item['item_id'], level + 1)
-        
-        build_tree()
-        
-        response += "\n💡 **Commands:**\n"
-        response += "• `/admin deleteitem [id]` - Delete an item\n"
-        response += "• `/admin button` - Create new items\n"
-        response += "• `/admin quickadd` - Quick add (see help)"
+            if item['item_type'] == 'folder':
+                # Show sub-items
+                sub_items = self.menu.get_menu_items(parent_id=item['item_id'])
+                for sub in sub_items:
+                    sub_icon = "🔗" if sub['item_type'] == 'url' else "📝"
+                    response += f"  └─ {sub_icon} {sub['display_name']} (ID: {sub['item_id']})\n"
+            
+            response += "\n"
         
         await context.bot.send_message(
             chat_id=message.chat_id,
@@ -427,40 +336,20 @@ class AdminCommands:
     
     async def quick_add_button(self, message, context, args):
         """Quick add button: /admin quickadd parent type name data"""
-        if len(args) < 4:
-            await context.bot.send_message(
-                chat_id=message.chat_id,
-                text="❌ Usage: `/admin quickadd parent_id type name data`\n\n"
-                     "Examples:\n"
-                     "• `/admin quickadd 0 folder Videos`\n"
-                     "• `/admin quickadd 1 button \"Video 1\" -1003761591150,2`\n"
-                     "• `/admin quickadd 0 url Website https://example.com`"
-            )
-            return
-        
         try:
             parent_id = int(args[1])
             item_type = args[2].lower()
             button_name = args[3]
             
-            content_data = {}
-            
             if item_type == 'button':
                 if len(args) < 5:
                     await context.bot.send_message(
                         chat_id=message.chat_id,
-                        text="❌ For buttons, provide: parent_id button name channel_id,message_id"
+                        text="❌ For buttons: /admin quickadd parent_id button name channel_id,message_id"
                     )
                     return
                 
                 channel_parts = args[4].split(',')
-                if len(channel_parts) != 2:
-                    await context.bot.send_message(
-                        chat_id=message.chat_id,
-                        text="❌ Channel data format: -1003761591150,2"
-                    )
-                    return
-                
                 content_data = {
                     'channel_id': int(channel_parts[0]),
                     'message_id': int(channel_parts[1])
@@ -470,7 +359,7 @@ class AdminCommands:
                 if len(args) < 5:
                     await context.bot.send_message(
                         chat_id=message.chat_id,
-                        text="❌ For URLs, provide: parent_id url name url_link"
+                        text="❌ For URLs: /admin quickadd parent_id url name url_link"
                     )
                     return
                 
