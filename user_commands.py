@@ -1,4 +1,3 @@
-cat > user_commands.py << 'EOF'
 """
 User-facing command handlers and menu navigation
 """
@@ -51,12 +50,12 @@ class UserCommands:
             for item in menu_items:
                 callback_data = f"menu_{item['item_id']}"
                 
-                if item['type'] == 'folder':
-                    button_text = f"📁 {item['name']}"
-                elif item['type'] == 'url':
-                    button_text = f"🔗 {item['name']}"
+                if item['item_type'] == 'folder':
+                    button_text = f"📁 {item['display_name']}"
+                elif item['item_type'] == 'url':
+                    button_text = f"🔗 {item['display_name']}"
                 else:
-                    button_text = item['name']
+                    button_text = item['display_name']
                 
                 row.append(InlineKeyboardButton(button_text, callback_data=callback_data))
                 
@@ -172,4 +171,3 @@ class UserCommands:
         """Handle back button navigation"""
         # Simplified: Go to root
         await self.show_main_menu(callback_query.message, "🔙 Returned to main menu")
-EOF
