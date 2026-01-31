@@ -1,3 +1,4 @@
+cat > database.py << 'EOF'
 """
 MongoDB database operations
 """
@@ -149,3 +150,4 @@ class MongoDB:
     def delete_log(self, log_id):
         """Delete access log"""
         self.db.access_logs.delete_one({"_id": log_id})
+EOF
