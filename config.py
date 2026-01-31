@@ -4,7 +4,7 @@ Configuration and constants for the Premium Content Bot
 
 # Bot Configuration
 BOT_TOKEN = "8503320755:AAEfdX41jXqRjVk8mfBIZoqCkPCXKR7m-m4"  # Replace with your actual token
-ADMIN_IDS = [123456789]  # Your Telegram user ID(s)
+ADMIN_IDS = [1003761591150]  # Your Telegram user ID(s)
 
 # MongoDB Configuration
 MONGODB_URI = "mongodb+srv://Test:aloksingh@cluster0.iomykdc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -20,3 +20,4 @@ CLEANUP_INTERVAL = 300  # 5 minutes
 # Bot settings
 MAX_FOLDER_DEPTH = 10
 MAX_BUTTONS_PER_ROW = 2
+
