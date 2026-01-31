@@ -38,21 +38,20 @@ class PremiumContentBot:
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
     
     async def handle_start(self, update: Update, context):
-    """Handle /start command"""
-    await self.user_commands.handle_start(update, context)
+        """Handle /start command"""
+        await self.user_commands.handle_start(update, context)
     
- async def handle_admin(self, update: Update, context):
-    """Handle /admin command"""
-    command_parts = context.args
-    await self.admin_commands.handle_admin_command(update, context, command_parts)
+    async def handle_admin(self, update: Update, context):
+        """Handle /admin command"""
+        command_parts = context.args
+        await self.admin_commands.handle_admin_command(update, context, command_parts)
     
     async def handle_callback(self, update: Update, context):
         """Handle inline keyboard button clicks"""
-        await self.user_commands.handle_callback_query(update.callback_query)
+        await self.user_commands.handle_callback_query(update, context)
     
     async def handle_message(self, update: Update, context):
         """Handle regular messages (for admin flows)"""
-        # Simplified - would handle button creation conversation
         pass
     
     async def cleanup_task(self):
@@ -78,5 +77,3 @@ class PremiumContentBot:
 if __name__ == "__main__":
     bot = PremiumContentBot()
     bot.run()
-
-
