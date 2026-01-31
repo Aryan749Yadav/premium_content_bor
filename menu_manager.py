@@ -1,4 +1,3 @@
-cat > menu_manager.py << 'EOF'
 """
 Menu structure management for MongoDB
 """
@@ -79,4 +78,3 @@ class MenuManager:
         except Exception as e:
             print(f"Error importing menu: {e}")
             return False
-EOF
