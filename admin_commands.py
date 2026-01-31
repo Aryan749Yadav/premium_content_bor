@@ -1,5 +1,3 @@
-# Replace admin_commands.py
-cat > admin_commands.py << 'EOF'
 """
 Admin-only command handlers
 """
@@ -122,17 +120,7 @@ class AdminCommands:
     
     async def start_button_creation(self, message, context):
         """Start the button creation process"""
-        # This would initiate a conversation flow
-        # For simplicity, showing basic response
         await context.bot.send_message(
             chat_id=message.chat_id,
-            text=(
-                "🔄 Button creation process started.\n"
-                "Please send:\n"
-                "1. Button name\n"
-                "2. Content type (link/url/folder)\n"
-                "3. Content data\n\n"
-                "Or use /cancel to abort."
-            )
+            text="🔄 Button creation process started.\nPlease send:\n1. Button name\n2. Content type (link/url/folder)\n3. Content data\n\nOr use /cancel to abort."
         )
-EOF
