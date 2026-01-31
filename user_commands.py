@@ -1,5 +1,3 @@
-# Replace user_commands.py with this corrected version
-cat > user_commands.py << 'EOF'
 """
 User-facing command handlers and menu navigation
 """
@@ -32,9 +30,7 @@ class UserCommands:
         else:
             await context.bot.send_message(
                 chat_id=update.message.chat_id,
-                text="⛔ **Access Denied**\n\n"
-                     "You do not have premium access.\n"
-                     "Please contact the admin for subscription details."
+                text="⛔ **Access Denied**\n\nYou do not have premium access.\nPlease contact the admin for subscription details."
             )
     
     async def show_main_menu(self, message, context, text=""):
@@ -195,6 +191,4 @@ class UserCommands:
     
     async def handle_back_button(self, user_id, callback_query, context):
         """Handle back button navigation"""
-        # Simplified: Go to root
         await self.show_main_menu(callback_query.message, context, "🔙 Returned to main menu")
-EOF
