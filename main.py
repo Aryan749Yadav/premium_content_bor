@@ -41,10 +41,10 @@ class PremiumContentBot:
     """Handle /start command"""
     await self.user_commands.handle_start(update, context)
     
-    async def handle_admin(self, update: Update, context):
-        """Handle /admin command"""
-        command_parts = context.args
-        await self.admin_commands.handle_admin_command(update.message, command_parts)
+ async def handle_admin(self, update: Update, context):
+    """Handle /admin command"""
+    command_parts = context.args
+    await self.admin_commands.handle_admin_command(update, context, command_parts)
     
     async def handle_callback(self, update: Update, context):
         """Handle inline keyboard button clicks"""
@@ -78,4 +78,5 @@ class PremiumContentBot:
 if __name__ == "__main__":
     bot = PremiumContentBot()
     bot.run()
+
 
