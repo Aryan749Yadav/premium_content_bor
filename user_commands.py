@@ -1,3 +1,5 @@
+# Replace user_commands.py with this corrected version
+cat > user_commands.py << 'EOF'
 """
 User-facing command handlers and menu navigation
 """
@@ -195,3 +197,4 @@ class UserCommands:
         """Handle back button navigation"""
         # Simplified: Go to root
         await self.show_main_menu(callback_query.message, context, "🔙 Returned to main menu")
+EOF
