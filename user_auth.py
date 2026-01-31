@@ -1,4 +1,3 @@
-cat > user_auth.py << 'EOF'
 """
 Premium user authentication and management
 """
@@ -28,4 +27,3 @@ class UserAuth:
     def list_premium_users(self):
         """Get all active premium users"""
         return self.db.list_premium_users()
-EOF
