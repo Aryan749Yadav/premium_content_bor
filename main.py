@@ -2,11 +2,11 @@
 Main bot application - Entry point
 """
 import asyncio
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ConversationHandler
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 from telegram import Update
 import config
 from user_commands import UserCommands
-from admin_commands import AdminCommands, BUTTON_NAME, BUTTON_TYPE, BUTTON_CONTENT, BUTTON_PARENT
+from admin_commands import AdminCommands
 from utils import setup_logging
 from content_delivery import ContentDelivery
 
@@ -31,32 +31,13 @@ class PremiumContentBot:
         self.application.add_handler(CommandHandler("start", self.handle_start))
         self.application.add_handler(CommandHandler("admin", self.handle_admin))
         
-        # Admin button creation conversation handler
-        conv_handler = ConversationHandler(
-            entry_points=[CommandHandler("admin", self.handle_admin_start)],
-            states={
-                BUTTON_PARENT: [
-                    CallbackQueryHandler(self.admin_commands.button_parent_callback, pattern="^(parent_|cancel)")
-                ],
-                BUTTON_NAME: [
-                    MessageHandler(filters.TEXT & ~filters.COMMAND, self.admin_commands.button_name)
-                ],
-                BUTTON_TYPE: [
-                    CallbackQueryHandler(self.admin_commands.button_type_callback, pattern="^(type_|cancel)")
-                ],
-                BUTTON_CONTENT: [
-                    MessageHandler(filters.TEXT & ~filters.COMMAND, self.admin_commands.button_content)
-                ],
-            },
-            fallbacks=[CommandHandler("cancel", self.admin_commands.cancel)],
-        )
+        # Callback query handlers
+        # Admin callbacks (button creation)
+        self.application.add_handler(CallbackQueryHandler(self.handle_admin_callback, pattern="^(create_|cancel_)"))
+        # User callbacks (menu navigation) - catch all other callbacks
+        self.application.add_handler(CallbackQueryHandler(self.handle_user_callback))
         
-        self.application.add_handler(conv_handler)
-        
-        # Callback query handler for button clicks (user navigation)
-        self.application.add_handler(CallbackQueryHandler(self.handle_callback))
-        
-        # Message handler for regular messages
+        # Message handler for all text messages (for button creation responses)
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
     
     async def handle_start(self, update: Update, context):
@@ -64,43 +45,52 @@ class PremiumContentBot:
         await self.user_commands.handle_start(update, context)
     
     async def handle_admin(self, update: Update, context):
-        """Handle /admin command with arguments"""
+        """Handle /admin command"""
         command_parts = context.args
         await self.admin_commands.handle_admin_command(update, context, command_parts)
     
-    async def handle_admin_start(self, update: Update, context):
-        """Handle /admin command to start conversation"""
-        command_parts = context.args
-        
-        # If no arguments, start button creation
-        if not command_parts:
-            return await self.admin_commands.start_button_creation(update, context)
-        else:
-            # Handle other admin commands
-            return await self.admin_commands.handle_admin_command(update, context, command_parts)
+    async def handle_admin_callback(self, update: Update, context):
+        """Handle admin callback queries (button creation menu)"""
+        await self.admin_commands.handle_callback_query(update, context)
     
-    async def handle_callback(self, update: Update, context):
-        """Handle inline keyboard button clicks"""
+    async def handle_user_callback(self, update: Update, context):
+        """Handle user callback queries (menu navigation)"""
+        # First check if it's an admin callback (should have been caught already)
+        query = update.callback_query
+        data = query.data
+        
+        if data.startswith("create_") or data.startswith("cancel_"):
+            # This should have been handled by admin callback handler
+            return
+        
+        # Otherwise, it's a user menu navigation callback
         await self.user_commands.handle_callback_query(update, context)
     
     async def handle_message(self, update: Update, context):
-        """Handle regular messages"""
-        # Check if it's part of admin conversation
-        if update.message.text.startswith('/'):
-            return
-        
-        # Check if user is in conversation
+        """Handle regular text messages"""
+        # Check if it's a response to button creation
         user_id = update.message.from_user.id
-        if hasattr(self.admin_commands, 'temp_data') and user_id in self.admin_commands.temp_data:
-            # Let conversation handler deal with it
+        
+        # If user is in button creation state, handle it
+        if hasattr(self.admin_commands, 'user_states') and user_id in self.admin_commands.user_states:
+            await self.admin_commands.handle_message_response(update, context)
             return
         
-        # Otherwise, ignore or send help
-        await update.message.reply_text(
-            "🤖 **Premium Content Bot**\n\n"
-            "Use /start to access premium content\n"
-            "Admins: Use /admin for management"
-        )
+        # Otherwise, check if it's admin trying to use quick commands
+        text = update.message.text
+        
+        # Check for quick add pattern without command
+        if text and ' ' in text and len(text.split()) >= 3:
+            # Could be a quick add attempt, forward to admin commands
+            pass
+        
+        # Default response for other messages
+        if not text.startswith('/'):
+            await update.message.reply_text(
+                "🤖 **Premium Content Bot**\n\n"
+                "Use /start to access premium content\n"
+                "Admins: Use /admin for management commands"
+            )
     
     async def cleanup_task(self):
         """Periodic cleanup task"""
