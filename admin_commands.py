@@ -65,10 +65,10 @@ class AdminCommands:
             return
         
         response = "👑 **Premium Users:**\n\n"
-        for user_id, added_by, added_date in users:
-            response += f"• User ID: `{user_id}`\n"
-            response += f"  Added by: `{added_by}`\n"
-            response += f"  Date: {added_date}\n\n"
+        for user in users:
+            response += f"• User ID: `{user['user_id']}`\n"
+            response += f"  Added by: `{user['added_by']}`\n"
+            response += f"  Date: {user['added_date']}\n\n"
         
         await message.reply(response)
     
